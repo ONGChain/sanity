@@ -28,6 +28,7 @@ import {
 import {
   documentActionsReducer,
   documentBadgesReducer,
+  documentInspectorsReducer,
   documentLanguageFilterReducer,
   fileAssetSourceResolver,
   imageAssetSourceResolver,
@@ -460,6 +461,14 @@ function resolveSource({
           initialValue: initialDocumentBadges,
           propertyName: 'document.badges',
           reducer: documentBadgesReducer,
+        }),
+      inspectors: (partialContext, defaultInspectors) =>
+        resolveConfigProperty({
+          config,
+          context: {...context, ...partialContext},
+          initialValue: defaultInspectors,
+          propertyName: 'document.inspectors',
+          reducer: documentInspectorsReducer,
         }),
       resolveProductionUrl: (partialContext) =>
         resolveConfigProperty({
