@@ -1,8 +1,7 @@
 import React, {forwardRef} from 'react'
-import {Tab} from '@sanity/ui'
+import {Tab, TabProps} from '@sanity/ui'
 
 interface GroupType {
-  'aria-controls': string
   autoFocus?: boolean
   disabled?: boolean
   icon?: React.ComponentType
@@ -13,7 +12,7 @@ interface GroupType {
 }
 
 export const GroupTab = forwardRef(function GroupTab(
-  props: GroupType,
+  props: GroupType & Omit<TabProps, 'id' | 'label'>,
   ref: React.Ref<HTMLButtonElement>
 ) {
   // Separate props for resolving conditional hidden groups
@@ -27,7 +26,6 @@ export const GroupTab = forwardRef(function GroupTab(
   return (
     <Tab
       data-testid={`group-tab-${name}`}
-      size={1}
       id={`${props.name}-tab`}
       label={props.title}
       ref={ref}
@@ -37,7 +35,9 @@ export const GroupTab = forwardRef(function GroupTab(
   )
 })
 
-export const GroupOption = (props: Omit<GroupType, 'onClick' | 'autoFocus'>) => {
+export const GroupOption = (
+  props: Omit<GroupType, 'onClick' | 'autoFocus'> & Omit<TabProps, 'id' | 'label'>
+) => {
   const {name, title, ...rest} = props
   const {selected} = props
 

@@ -37,13 +37,14 @@ const GroupTabs = ({
   shouldAutoFocus = true,
   disabled,
 }: FieldGroupTabsProps) => (
-  <TabList space={2} data-testid="field-group-tabs">
+  <TabList space={1} data-testid="field-group-tabs">
     {groups.map((group) => {
       return (
         <GroupTab
           aria-controls={`${inputId}-field-group-fields`}
           autoFocus={shouldAutoFocus && group.selected}
           disabled={disabled || group.disabled}
+          fontSize={1}
           icon={group?.icon}
           key={`${inputId}-${group.name}-tab`}
           name={group.name}
@@ -77,7 +78,8 @@ const GroupSelect = ({
       autoFocus={shouldAutoFocus}
       data-testid="field-group-select"
       disabled={disabled}
-      fontSize={2}
+      fontSize={1}
+      padding={2}
       muted
       onChange={handleSelect}
       value={groups.find((g) => g.selected)?.name}

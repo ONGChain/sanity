@@ -1,11 +1,13 @@
 /* eslint-disable react/jsx-handler-names */
 import {isBooleanSchemaType, isReferenceSchemaType, SchemaType} from '@sanity/types'
 import React from 'react'
+import {Box, Flex, Stack} from '@sanity/ui'
 import {ArrayFieldProps, FieldProps, ObjectFieldProps} from '../../types'
 import {ReferenceField} from '../../inputs/ReferenceInput/ReferenceField'
 import {FieldMember} from '../../store'
 import {FormField, FormFieldSet} from '../../components'
 import {ChangeIndicator} from '../../../changeIndicators'
+import {FieldGroupTabs} from '../../inputs/ObjectInput/fieldGroups'
 import {getTypeChain} from './helpers'
 
 function BooleanField(field: FieldProps) {
@@ -18,6 +20,33 @@ function BooleanField(field: FieldProps) {
       {field.children}
     </ChangeIndicator>
   )
+}
+
+function DocumentField(field: ObjectFieldProps) {
+  const {groups, inputId: id, onFieldGroupSelect, path} = field
+
+  if (groups.length > 0) {
+    return (
+      <Stack space={5}>
+        <Flex align="flex-start" style={{lineHeight: 0}}>
+          <Box flex={1}>
+            {groups.length > 0 && (
+              <FieldGroupTabs
+                groups={groups}
+                inputId={id}
+                onClick={onFieldGroupSelect}
+                shouldAutoFocus={path.length === 0}
+              />
+            )}
+          </Box>
+        </Flex>
+
+        <div>{field.children}</div>
+      </Stack>
+    )
+  }
+
+  return field.children
 }
 
 function PrimitiveField(field: FieldProps) {
@@ -97,6 +126,10 @@ export function defaultResolveFieldComponent(
   }
 
   const typeChain = getTypeChain(schemaType, new Set())
+
+  if (typeChain.some((t) => t.name === 'document')) {
+    return DocumentField as React.ComponentType<Omit<FieldProps, 'renderDefault'>>
+  }
 
   if (typeChain.some((t) => t.name === 'image' || t.name === 'file')) {
     return ImageOrFileField as React.ComponentType<Omit<FieldProps, 'renderDefault'>>

@@ -263,6 +263,7 @@ export const ObjectField = function ObjectField(props: {
       collapsible: member.collapsible,
       collapsed: member.collapsed,
       onCollapse: handleCollapse,
+      onFieldGroupSelect: handleSelectFieldGroup,
       onExpand: handleExpand,
 
       open: member.open,
@@ -295,6 +296,7 @@ export const ObjectField = function ObjectField(props: {
     handleExpand,
     handleOpen,
     handleClose,
+    handleSelectFieldGroup,
     renderedInput,
     inputProps,
   ])
