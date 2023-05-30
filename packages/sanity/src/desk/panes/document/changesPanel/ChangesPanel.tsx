@@ -91,7 +91,7 @@ export function ChangesPanel(): React.ReactElement | null {
                 description="Changes by"
                 placement="bottom-end"
               >
-                <AvatarStack maxLength={4}>
+                <AvatarStack maxLength={4} aria-label="Changes by">
                   {changeAnnotations.map(({author}) => (
                     <UserAvatar key={author} user={author} />
                   ))}
