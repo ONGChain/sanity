@@ -95,6 +95,7 @@ export function StudioNavbar() {
     () => ({
       brandingCenter: mediaIndex <= 1,
       changelog: mediaIndex > 1,
+      resources: mediaIndex > 1,
       collapsedPresenceMenu: mediaIndex <= 1,
       loginStatus: mediaIndex > 1,
       searchFullscreen: mediaIndex <= 1,
@@ -255,11 +256,11 @@ export function StudioNavbar() {
               </Box>
             )}
 
-            {
+            {shouldRender.resources && (
               <Box marginRight={1}>
                 <ResourcesButton />
               </Box>
-            }
+            )}
 
             {shouldRender.searchFullscreen && (
               <Button
