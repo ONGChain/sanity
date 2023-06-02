@@ -1,8 +1,8 @@
 import {AssetSource, ObjectSchemaType, Path, SanityDocument} from '@sanity/types'
 import {createContext} from 'react'
+import {DocumentFieldAction} from '../config'
 import {PatchChannel} from './patch'
 import {
-  FormBuilderArrayFunctionComponent,
   FormBuilderCustomMarkersComponent,
   FormBuilderFilterFieldFn,
   FormBuilderMarkersComponent,
@@ -29,6 +29,10 @@ export interface FormBuilderContextValue {
     components: {
       CustomMarkers: FormBuilderCustomMarkersComponent
       Markers: FormBuilderMarkersComponent
+    }
+    documentId?: string
+    field: {
+      actions: DocumentFieldAction[]
     }
     file: {
       assetSources: AssetSource[]

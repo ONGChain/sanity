@@ -1,6 +1,5 @@
 import React, {useCallback, useMemo, useRef} from 'react'
 import {
-  ArraySchemaType,
   BooleanSchemaType,
   isBooleanSchemaType,
   isNumberSchemaType,
@@ -36,6 +35,9 @@ import {DEFAULT_STUDIO_CLIENT_OPTIONS} from '../../../../studioClient'
 import {readAsText} from '../../../studio/uploads/file/readAsText'
 import {accepts} from '../../../studio/uploads/accepts'
 import {applyAll} from '../../../patch/applyPatch'
+import {FieldActionMenu, FieldProvider, useFieldActions} from '../../../field'
+import {useFormBuilder} from '../../../useFormBuilder'
+import {pathToString} from '../../../../field'
 
 function move<T>(arr: T[], from: number, to: number): T[] {
   const copy = arr.slice()
@@ -136,6 +138,11 @@ export function ArrayOfPrimitivesField(props: {
   renderItem: RenderArrayOfPrimitivesItemCallback
   renderPreview: RenderPreviewCallback
 }) {
+  const {member} = props
+  const {__internal, focusPath} = useFormBuilder()
+  const {documentId, field} = __internal
+  const focused = pathToString(focusPath) === pathToString(member.field.path)
+
   const {
     onPathBlur,
     onPathFocus,
@@ -145,8 +152,70 @@ export function ArrayOfPrimitivesField(props: {
     onSetFieldSetCollapsed,
     onFieldGroupSelect,
   } = useFormCallbacks()
+
+  const handleChange = useCallback(
+    (event: PatchEvent | PatchArg) => {
+      const patches = PatchEvent.from(event).patches
+      // if the patch is an unset patch that targets an item in the array (as opposed to unsetting a field somewhere deeper)
+      const isRemovingLastItem = patches.some(
+        (patch) => patch.type === 'unset' && patch.path.length === 1
+      )
+
+      if (isRemovingLastItem) {
+        // apply the patch to the current value
+        const result = applyAll(member.field.value || [], patches)
+
+        // if the result is an empty array
+        if (Array.isArray(result) && !result.length) {
+          // then unset the array field
+          onChange(PatchEvent.from(unset([member.name])))
+          return
+        }
+      }
+      // otherwise apply the patch
+      onChange(PatchEvent.from(event).prepend(setIfMissing([])).prefixAll(member.name))
+    },
+    [onChange, member.name, member.field.value]
+  )
+
+  return (
+    <FormCallbacksProvider
+      onFieldGroupSelect={onFieldGroupSelect}
+      onChange={handleChange}
+      onPathOpen={onPathOpen}
+      onSetFieldSetCollapsed={onSetFieldSetCollapsed}
+      onSetPathCollapsed={onSetPathCollapsed}
+      onPathBlur={onPathBlur}
+      onPathFocus={onPathFocus}
+    >
+      <FieldProvider
+        actions={field.actions}
+        documentId={documentId}
+        documentType={member.field.schemaType.name}
+        focused={focused}
+        path={member.field.path}
+        schemaType={member.field.schemaType}
+      >
+        <Field {...props} onChange={handleChange} />
+      </FieldProvider>
+    </FormCallbacksProvider>
+  )
+}
+
+function Field(props: {
+  member: FieldMember<ArrayOfPrimitivesFormNode>
+  onChange: (event: PatchEvent | PatchArg) => void
+  renderAnnotation?: RenderAnnotationCallback
+  renderBlock?: RenderBlockCallback
+  renderField: RenderFieldCallback
+  renderInlineBlock?: RenderBlockCallback
+  renderInput: RenderInputCallback
+  renderItem: RenderArrayOfPrimitivesItemCallback
+  renderPreview: RenderPreviewCallback
+}) {
   const {
     member,
+    onChange,
     renderAnnotation,
     renderBlock,
     renderField,
@@ -156,15 +225,26 @@ export function ArrayOfPrimitivesField(props: {
     renderPreview,
   } = props
 
+  const {
+    onPathBlur,
+    onPathFocus,
+    // onChange,
+    // onPathOpen,
+    onSetPathCollapsed,
+    // onSetFieldSetCollapsed,
+    // onFieldGroupSelect,
+  } = useFormCallbacks()
+
   const focusRef = useRef<Element & {focus: () => void}>()
-  const uploadSubscriptions = useRef<Subscription>()
-  const client = useClient(DEFAULT_STUDIO_CLIENT_OPTIONS)
 
   useDidUpdate(member.field.focused, (hadFocus, hasFocus) => {
     if (!hadFocus && hasFocus) {
       focusRef.current?.focus()
     }
   })
+
+  const uploadSubscriptions = useRef<Subscription>()
+  const client = useClient(DEFAULT_STUDIO_CLIENT_OPTIONS)
 
   const handleFocus = useCallback(
     (event: React.FocusEvent) => {
@@ -192,31 +272,6 @@ export function ArrayOfPrimitivesField(props: {
     [member.field.path, onPathBlur]
   )
 
-  const handleChange = useCallback(
-    (event: PatchEvent | PatchArg) => {
-      const patches = PatchEvent.from(event).patches
-      // if the patch is an unset patch that targets an item in the array (as opposed to unsetting a field somewhere deeper)
-      const isRemovingLastItem = patches.some(
-        (patch) => patch.type === 'unset' && patch.path.length === 1
-      )
-
-      if (isRemovingLastItem) {
-        // apply the patch to the current value
-        const result = applyAll(member.field.value || [], patches)
-
-        // if the result is an empty array
-        if (Array.isArray(result) && !result.length) {
-          // then unset the array field
-          onChange(PatchEvent.from(unset([member.name])))
-          return
-        }
-      }
-      // otherwise apply the patch
-      onChange(PatchEvent.from(event).prepend(setIfMissing([])).prefixAll(member.name))
-    },
-    [onChange, member.name, member.field.value]
-  )
-
   const handleSetCollapsed = useCallback(
     (collapsed: boolean) => {
       onSetPathCollapsed(member.field.path, collapsed)
@@ -233,9 +288,9 @@ export function ArrayOfPrimitivesField(props: {
 
   const setValue = useCallback(
     (nextValue: PrimitiveValue[]) => {
-      handleChange(nextValue.length === 0 ? unset() : set(nextValue))
+      onChange(nextValue.length === 0 ? unset() : set(nextValue))
     },
-    [handleChange]
+    [onChange]
   )
 
   const handleMoveItem = useCallback(
@@ -278,9 +333,9 @@ export function ArrayOfPrimitivesField(props: {
 
   const handleRemoveItem = useCallback(
     (index: number) => {
-      handleChange(unset([index]))
+      onChange(unset([index]))
     },
-    [handleChange]
+    [onChange]
   )
 
   const handleFocusIndex = useCallback(
@@ -316,7 +371,7 @@ export function ArrayOfPrimitivesField(props: {
         map((uploadProgressEvent: UploadProgressEvent) =>
           PatchEvent.from(uploadProgressEvent.patches || [])
         ),
-        tap((event) => handleChange(event.patches))
+        tap((event) => onChange(event.patches))
       )
 
       if (uploadSubscriptions.current) {
@@ -324,7 +379,7 @@ export function ArrayOfPrimitivesField(props: {
       }
       uploadSubscriptions.current = events$.subscribe()
     },
-    [client, handleChange]
+    [client, onChange]
   )
 
   const inputProps = useMemo((): Omit<ArrayOfPrimitivesInputProps, 'renderDefault'> => {
@@ -341,7 +396,7 @@ export function ArrayOfPrimitivesField(props: {
       path: member.field.path,
       focusPath: member.field.focusPath,
       focused: member.field.focused,
-      onChange: handleChange,
+      onChange: onChange,
       onInsert: handleInsert,
       onMoveItem: handleMoveItem,
       onItemRemove: handleRemoveItem,
@@ -374,7 +429,7 @@ export function ArrayOfPrimitivesField(props: {
     member.field.presence,
     handleSetCollapsed,
     elementProps,
-    handleChange,
+    onChange,
     handleInsert,
     handleMoveItem,
     handleRemoveItem,
@@ -393,8 +448,11 @@ export function ArrayOfPrimitivesField(props: {
 
   const renderedInput = useMemo(() => renderInput(inputProps), [inputProps, renderInput])
 
+  const actions = useFieldActions()
+
   const fieldProps: Omit<ArrayOfPrimitivesFieldProps, 'renderDefault'> = useMemo(() => {
     return {
+      actions: actions.length > 0 ? <FieldActionMenu nodes={actions} /> : undefined,
       name: member.name,
       index: member.index,
       level: member.field.level,
@@ -415,35 +473,24 @@ export function ArrayOfPrimitivesField(props: {
       inputProps: inputProps as ArrayOfPrimitivesInputProps,
     }
   }, [
+    actions,
     member.name,
     member.index,
     member.field.level,
     member.field.value,
     member.field.schemaType,
+    member.field.changed,
     member.field.id,
     member.field.path,
     member.field.presence,
     member.field.validation,
     member.collapsible,
     member.collapsed,
-    member.field.changed,
     handleExpand,
     handleCollapse,
     renderedInput,
     inputProps,
   ])
 
-  return (
-    <FormCallbacksProvider
-      onFieldGroupSelect={onFieldGroupSelect}
-      onChange={handleChange}
-      onPathOpen={onPathOpen}
-      onSetFieldSetCollapsed={onSetFieldSetCollapsed}
-      onSetPathCollapsed={onSetPathCollapsed}
-      onPathBlur={onPathBlur}
-      onPathFocus={onPathFocus}
-    >
-      {useMemo(() => renderField(fieldProps as FIXME), [fieldProps, renderField])}
-    </FormCallbacksProvider>
-  )
+  return <>{renderField(fieldProps as FIXME)}</>
 }

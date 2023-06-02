@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 import {ObjectSchemaType, Path, ValidationMarker} from '@sanity/types'
 import React, {useCallback} from 'react'
 import {useSource} from '../../studio'
@@ -24,14 +23,17 @@ import {
 } from '../form-components-hooks'
 import {FormNodePresence} from '../../presence'
 import {PreviewLoader} from '../../preview/components/PreviewLoader'
+import {DocumentFieldAction} from '../../config'
 
 /**
  * @alpha This API might change.
  */
 export interface FormProviderProps {
-  /**
-   * @internal Considered internal, do not use.
-   */
+  /** @internal */
+  __internal_documentId?: string
+  /** @internal */
+  __internal_fieldActions?: DocumentFieldAction[]
+  /** @internal Considered internal, do not use. */
   __internal_patchChannel: PatchChannel
 
   autoFocus?: boolean
@@ -65,6 +67,8 @@ export interface FormProviderProps {
  */
 export function FormProvider(props: FormProviderProps) {
   const {
+    __internal_documentId: documentId,
+    __internal_fieldActions: fieldActions,
     __internal_patchChannel: patchChannel,
     autoFocus,
     changesOpen,
@@ -136,6 +140,8 @@ export function FormProvider(props: FormProviderProps) {
 
   return (
     <FormBuilderProvider
+      __internal_documentId={documentId}
+      __internal_fieldActions={fieldActions}
       __internal_patchChannel={patchChannel}
       autoFocus={autoFocus}
       changesOpen={changesOpen}
