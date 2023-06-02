@@ -27,7 +27,14 @@ import {StudioTheme} from '../theme'
 import {SearchFilterDefinition} from '../studio/components/navbar/search/definitions/filters'
 import {SearchOperatorDefinition} from '../studio/components/navbar/search/definitions/operators'
 import {StudioComponents, StudioComponentsPluginOptions} from './studio'
-import {DocumentActionComponent, DocumentBadgeComponent, DocumentInspector} from './document'
+import {
+  DocumentActionComponent,
+  DocumentBadgeComponent,
+  DocumentFieldAction,
+  DocumentFieldActionsResolverContext,
+  DocumentFieldActionsResolver,
+  DocumentInspector,
+} from './document'
 import {Router, RouterState} from 'sanity/router'
 
 /**
@@ -162,6 +169,9 @@ export type NewDocumentCreationContext =
 export interface DocumentPluginOptions {
   badges?: DocumentBadgeComponent[] | DocumentBadgesResolver
   actions?: DocumentActionComponent[] | DocumentActionsResolver
+
+  /** @internal */
+  unstable_fieldActions?: DocumentFieldAction[] | DocumentFieldActionsResolver
   /** @beta */
   inspectors?: DocumentInspector[] | DocumentInspectorsResolver
   /** @beta */
@@ -346,6 +356,11 @@ export interface Source {
 
     /** @beta */
     badges: (props: PartialContext<DocumentActionsContext>) => DocumentBadgeComponent[]
+
+    /** @internal */
+    unstable_fieldActions: (
+      props: PartialContext<DocumentFieldActionsResolverContext>
+    ) => DocumentFieldAction[]
 
     /** @beta */
     resolveProductionUrl: (
