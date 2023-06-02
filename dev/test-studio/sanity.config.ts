@@ -35,6 +35,10 @@ import {googleTheme} from './themes/google'
 import {vercelTheme} from './themes/vercel'
 import {GoogleLogo, TailwindLogo, VercelLogo} from './components/workspaceLogos'
 import {customInspector} from './inspectors/custom'
+import {copyAction} from './fieldActions/testCopyAction'
+import {testAssistFieldActionGroup} from './fieldActions/testAssistFieldActionGroup'
+// import {testFieldAction} from './fieldActions/testFieldAction'
+// import {testFieldActionGroup} from './fieldActions/testFieldActionGroup'
 
 const sharedSettings = definePlugin({
   name: 'sharedSettings',
@@ -61,6 +65,16 @@ const sharedSettings = definePlugin({
 
       return prev
     },
+    unstable_fieldActions: (prev) => [
+      ...prev,
+      testAssistFieldActionGroup,
+      // copyAction,
+      // testFieldActionGroup,
+      // testFieldActionGroup,
+      // testFieldAction,
+      // testFieldAction,
+      // testFieldAction,
+    ],
     newDocumentOptions,
   },
   plugins: [
