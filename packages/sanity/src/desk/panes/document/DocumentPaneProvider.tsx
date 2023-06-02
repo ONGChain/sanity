@@ -41,6 +41,7 @@ import {
   useDocumentValuePermissions,
   useTimelineStore,
   useTimelineSelector,
+  DocumentFieldAction,
   DocumentInspectorMenuItem,
 } from 'sanity'
 
@@ -55,6 +56,7 @@ export const DocumentPaneProvider = memo((props: DocumentPaneProviderProps) => {
   const {
     actions: documentActions,
     badges: documentBadges,
+    unstable_fieldActions: fieldActionsResolver,
     unstable_languageFilter: languageFilterResolver,
     inspectors: inspectorsResolver,
   } = useSource().document
@@ -202,6 +204,11 @@ export const DocumentPaneProvider = memo((props: DocumentPaneProviderProps) => {
   const compareValue: Partial<SanityDocument> | null = changesOpen
     ? sinceAttributes
     : editState?.published || null
+
+  const fieldActions: DocumentFieldAction[] = useMemo(
+    () => (schemaType ? fieldActionsResolver({documentId, documentType, schemaType}) : []),
+    [documentId, documentType, fieldActionsResolver, schemaType]
+  )
 
   /**
    * Note that in addition to connection and edit state, we also wait for a valid document timeline
@@ -546,6 +553,7 @@ export const DocumentPaneProvider = memo((props: DocumentPaneProviderProps) => {
     documentIdRaw,
     documentType,
     editState,
+    fieldActions,
     focusPath,
     inspector: currentInspector || null,
     inspectors,
