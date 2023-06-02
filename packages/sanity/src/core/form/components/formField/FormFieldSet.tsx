@@ -14,6 +14,10 @@ export interface FormFieldSetProps {
   /**
    * @beta
    */
+  __unstable_headerActions?: React.ReactNode
+  /**
+   * @beta
+   */
   __unstable_presence?: FormNodePresence[]
   children: React.ReactNode | (() => React.ReactNode)
   collapsed?: boolean
@@ -82,6 +86,7 @@ export const FormFieldSet = forwardRef(function FormFieldSet(
   ref: React.ForwardedRef<HTMLDivElement>
 ) {
   const {
+    __unstable_headerActions: headerActions,
     validation = EMPTY_ARRAY,
     __unstable_presence: presence = EMPTY_ARRAY,
     children,
@@ -131,7 +136,7 @@ export const FormFieldSet = forwardRef(function FormFieldSet(
   return (
     <Root data-level={level} {...restProps}>
       {title && (
-        <Flex align="flex-end">
+        <Flex align="flex-end" style={{lineHeight: 1}}>
           <Box flex={1} paddingY={2}>
             <Stack space={2}>
               <Flex>
@@ -158,8 +163,14 @@ export const FormFieldSet = forwardRef(function FormFieldSet(
           </Box>
 
           {presence.length > 0 && (
-            <Box>
+            <Box flex="none">
               <FieldPresence maxAvatars={4} presence={presence} />
+            </Box>
+          )}
+
+          {headerActions && (
+            <Box flex="none" marginLeft={1}>
+              {headerActions}
             </Box>
           )}
         </Flex>

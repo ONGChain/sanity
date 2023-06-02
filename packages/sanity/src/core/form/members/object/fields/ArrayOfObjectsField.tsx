@@ -32,6 +32,8 @@ import * as is from '../../../utils/is'
 import {useResolveInitialValueForType} from '../../../../store'
 import {resolveInitialArrayValues} from '../../common/resolveInitialArrayValues'
 import {applyAll} from '../../../patch/applyPatch'
+import {FieldActionMenu, FieldProvider, useFieldActions} from '../../../field'
+import {pathToString} from '../../../../field'
 
 /**
  * Responsible for creating inputProps and fieldProps to pass to ´renderInput´ and ´renderField´ for an array input
@@ -48,6 +50,11 @@ export function ArrayOfObjectsField(props: {
   renderItem: RenderArrayOfObjectsItemCallback
   renderPreview: RenderPreviewCallback
 }) {
+  const {member} = props
+  const {__internal, focusPath} = useFormBuilder()
+  const {documentId, field} = __internal
+  const focused = pathToString(focusPath) === pathToString(member.field.path)
+
   const {
     onPathBlur,
     onPathFocus,
@@ -57,51 +64,6 @@ export function ArrayOfObjectsField(props: {
     onPathOpen,
     onFieldGroupSelect,
   } = useFormCallbacks()
-
-  const {
-    member,
-    renderAnnotation,
-    renderBlock,
-    renderField,
-    renderInlineBlock,
-    renderInput,
-    renderItem,
-    renderPreview,
-  } = props
-  const focusRef = useRef<Element & {focus: () => void}>()
-  const uploadSubscriptions = useRef<Record<string, Subscription>>({})
-
-  useDidUpdate(member.field.focused, (hadFocus, hasFocus) => {
-    if (!hadFocus && hasFocus) {
-      focusRef.current?.focus()
-    }
-  })
-
-  const handleFocus = useCallback(
-    (event: React.FocusEvent) => {
-      // We want to handle focus when the array input *itself* element receives
-      // focus, not when a child element receives focus, but React has decided
-      // to let focus bubble, so this workaround is needed
-      // Background: https://github.com/facebook/react/issues/6410#issuecomment-671915381
-      if (event.currentTarget === event.target && event.currentTarget === focusRef.current) {
-        onPathFocus(member.field.path)
-      }
-    },
-    [member.field.path, onPathFocus]
-  )
-
-  const handleBlur = useCallback(
-    (event: React.FocusEvent) => {
-      // We want to handle blur when the array input *itself* element receives
-      // blur, not when a child element receives blur, but React has decided
-      // to let focus events bubble, so this workaround is needed
-      // Background: https://github.com/facebook/react/issues/6410#issuecomment-671915381
-      if (event.currentTarget === event.target && event.currentTarget === focusRef.current) {
-        onPathBlur(member.field.path)
-      }
-    },
-    [member.field.path, onPathBlur]
-  )
 
   const valueRef = useRef(member.field.value)
   useEffect(() => {
@@ -132,6 +94,93 @@ export function ArrayOfObjectsField(props: {
     },
     [onChange, member.name, valueRef]
   )
+
+  return (
+    <FormCallbacksProvider
+      onFieldGroupSelect={onFieldGroupSelect}
+      onChange={handleChange}
+      onSetFieldSetCollapsed={onSetFieldSetCollapsed}
+      onSetPathCollapsed={onSetPathCollapsed}
+      onPathOpen={onPathOpen}
+      onPathBlur={onPathBlur}
+      onPathFocus={onPathFocus}
+    >
+      <FieldProvider
+        actions={field.actions}
+        documentId={documentId}
+        documentType={member.field.schemaType.name}
+        focused={focused}
+        path={member.field.path}
+        schemaType={member.field.schemaType}
+      >
+        <Field {...props} onChange={handleChange} />
+      </FieldProvider>
+    </FormCallbacksProvider>
+  )
+}
+
+function Field(props: {
+  member: FieldMember<ArrayOfObjectsFormNode>
+  onChange: (event: PatchEvent | PatchArg) => void
+  renderAnnotation?: RenderAnnotationCallback
+  renderBlock?: RenderBlockCallback
+  renderField: RenderFieldCallback
+  renderInlineBlock?: RenderBlockCallback
+  renderInput: RenderInputCallback
+  renderItem: RenderArrayOfObjectsItemCallback
+  renderPreview: RenderPreviewCallback
+}) {
+  const {
+    member,
+    onChange,
+    renderAnnotation,
+    renderBlock,
+    renderField,
+    renderInlineBlock,
+    renderInput,
+    renderItem,
+    renderPreview,
+  } = props
+
+  const {image, file} = useFormBuilder().__internal
+
+  const focusRef = useRef<Element & {focus: () => void}>()
+  const uploadSubscriptions = useRef<Record<string, Subscription>>({})
+
+  useDidUpdate(member.field.focused, (hadFocus, hasFocus) => {
+    if (!hadFocus && hasFocus) {
+      focusRef.current?.focus()
+    }
+  })
+
+  const {onPathBlur, onPathFocus, onSetPathCollapsed, onPathOpen} = useFormCallbacks()
+
+  const handleFocus = useCallback(
+    (event: React.FocusEvent) => {
+      // We want to handle focus when the array input *itself* element receives
+      // focus, not when a child element receives focus, but React has decided
+      // to let focus bubble, so this workaround is needed
+      // Background: https://github.com/facebook/react/issues/6410#issuecomment-671915381
+      if (event.currentTarget === event.target && event.currentTarget === focusRef.current) {
+        onPathFocus(member.field.path)
+      }
+    },
+    [member.field.path, onPathFocus]
+  )
+
+  const handleBlur = useCallback(
+    (event: React.FocusEvent) => {
+      // We want to handle blur when the array input *itself* element receives
+      // blur, not when a child element receives blur, but React has decided
+      // to let focus events bubble, so this workaround is needed
+      // Background: https://github.com/facebook/react/issues/6410#issuecomment-671915381
+      if (event.currentTarget === event.target && event.currentTarget === focusRef.current) {
+        onPathBlur(member.field.path)
+      }
+    },
+    [member.field.path, onPathBlur]
+  )
+
   const resolveInitialValue = useResolveInitialValueForType()
 
   const toast = useToast()
@@ -178,7 +227,7 @@ export function ArrayOfObjectsField(props: {
       }
       const itemsWithKeys = event.items.map((item) => ensureKey(item))
 
-      handleChange(PatchEvent.from([insert(itemsWithKeys, event.position, [event.referenceItem])]))
+      onChange(PatchEvent.from([insert(itemsWithKeys, event.position, [event.referenceItem])]))
 
       const focusItemKey = itemsWithKeys[0]._key
       const itemPath = [...member.field.path, {_key: focusItemKey}]
@@ -196,7 +245,7 @@ export function ArrayOfObjectsField(props: {
           .pipe(
             tap((result) => {
               if (result.type === 'patch') {
-                handleChange(result.patches)
+                onChange(result.patches)
               } else {
                 toast.push({
                   title: `Could not resolve initial value`,
@@ -216,7 +265,7 @@ export function ArrayOfObjectsField(props: {
       }
     },
     [
-      handleChange,
+      onChange,
       handleOpenItem,
       member.field.path,
       member.field.schemaType,
@@ -244,27 +293,27 @@ export function ArrayOfObjectsField(props: {
         return
       }
 
-      handleChange([
+      onChange([
         unset([{_key: item._key}]),
         insert([item], event.fromIndex > event.toIndex ? 'before' : 'after', [
           {_key: refItem._key},
         ]),
       ])
     },
-    [handleChange, member.field.value]
+    [onChange, member.field.value]
   )
 
   const handlePrependItem = useCallback(
     (item: any) => {
-      handleChange([setIfMissing([]), insert([ensureKey(item)], 'before', [0])])
+      onChange([setIfMissing([]), insert([ensureKey(item)], 'before', [0])])
     },
-    [handleChange]
+    [onChange]
   )
   const handleAppendItem = useCallback(
     (item: any) => {
-      handleChange([setIfMissing([]), insert([ensureKey(item)], 'after', [-1])])
+      onChange([setIfMissing([]), insert([ensureKey(item)], 'after', [-1])])
     },
-    [handleChange]
+    [onChange]
   )
 
   const handleRemoveItem = useCallback(
@@ -273,9 +322,9 @@ export function ArrayOfObjectsField(props: {
         uploadSubscriptions.current[itemKey].unsubscribe()
         delete uploadSubscriptions.current[itemKey]
       }
-      handleChange([unset([{_key: itemKey}])])
+      onChange([unset([{_key: itemKey}])])
     },
-    [handleChange]
+    [onChange]
   )
 
   const handleFocusChildPath = useCallback(
@@ -296,13 +345,12 @@ export function ArrayOfObjectsField(props: {
   )
 
   const client = useClient(DEFAULT_STUDIO_CLIENT_OPTIONS)
-  const formBuilder = useFormBuilder()
 
-  const supportsImageUploads = formBuilder.__internal.image.directUploads
-  const supportsFileUploads = formBuilder.__internal.file.directUploads
+  const supportsImageUploads = image.directUploads
+  const supportsFileUploads = file.directUploads
 
   const resolveUploader = useCallback(
-    (type: SchemaType, file: FileLike) => {
+    (type: SchemaType, _file: FileLike) => {
       if (is.type('image', type) && !supportsImageUploads) {
         return null
       }
@@ -310,13 +358,13 @@ export function ArrayOfObjectsField(props: {
         return null
       }
 
-      return defaultResolveUploader(type, file)
+      return defaultResolveUploader(type, _file)
     },
     [supportsFileUploads, supportsImageUploads]
   )
 
   const handleUpload = useCallback(
-    ({file, schemaType, uploader}: UploadEvent) => {
+    ({file: _file, schemaType, uploader}: UploadEvent) => {
       const item = createProtoArrayValue(schemaType)
       const key = item._key
 
@@ -327,11 +375,11 @@ export function ArrayOfObjectsField(props: {
         open: false,
       })
 
-      const events$ = uploader.upload(client, file, schemaType).pipe(
+      const events$ = uploader.upload(client, _file, schemaType).pipe(
         map((uploadProgressEvent: UploadProgressEvent) =>
           PatchEvent.from(uploadProgressEvent.patches || []).prefixAll({_key: key})
         ),
-        tap((event) => handleChange(event.patches))
+        tap((event) => onChange(event.patches))
       )
 
       uploadSubscriptions.current = {
@@ -339,7 +387,7 @@ export function ArrayOfObjectsField(props: {
         [key]: events$.subscribe(),
       }
     },
-    [client, handleChange, handleInsert]
+    [client, onChange, handleInsert]
   )
 
   const inputProps = useMemo((): Omit<ArrayOfObjectsInputProps, 'renderDefault'> => {
@@ -361,7 +409,7 @@ export function ArrayOfObjectsField(props: {
 
       path: member.field.path,
 
-      onChange: handleChange,
+      onChange,
       onInsert: handleInsert,
       onItemMove: handleMoveItem,
       onItemRemove: handleRemoveItem,
@@ -399,7 +447,7 @@ export function ArrayOfObjectsField(props: {
     handleCollapseItem,
     handleCloseItem,
     handleOpenItem,
-    handleChange,
+    onChange,
     handleInsert,
     handleMoveItem,
     handleRemoveItem,
@@ -421,8 +469,11 @@ export function ArrayOfObjectsField(props: {
 
   const renderedInput = useMemo(() => renderInput(inputProps), [inputProps, renderInput])
 
+  const actions = useFieldActions()
+
   const fieldProps = useMemo((): Omit<ArrayFieldProps, 'renderDefault'> => {
     return {
+      actions: actions.length > 0 ? <FieldActionMenu nodes={actions} /> : undefined,
       name: member.name,
       index: member.index,
       level: member.field.level,
@@ -443,15 +494,16 @@ export function ArrayOfObjectsField(props: {
       inputProps: inputProps as ArrayOfObjectsInputProps,
     }
   }, [
+    actions,
     member.name,
     member.index,
     member.field.level,
     member.field.value,
     member.field.schemaType,
+    member.field.changed,
     member.field.id,
     member.field.path,
     member.field.presence,
-    member.field.changed,
     member.field.validation,
     member.collapsible,
     member.collapsed,
@@ -461,17 +513,5 @@ export function ArrayOfObjectsField(props: {
     inputProps,
   ])
 
-  return (
-    <FormCallbacksProvider
-      onFieldGroupSelect={onFieldGroupSelect}
-      onChange={handleChange}
-      onSetFieldSetCollapsed={onSetFieldSetCollapsed}
-      onSetPathCollapsed={onSetPathCollapsed}
-      onPathOpen={onPathOpen}
-      onPathBlur={onPathBlur}
-      onPathFocus={onPathFocus}
-    >
-      {useMemo(() => renderField(fieldProps), [fieldProps, renderField])}
-    </FormCallbacksProvider>
-  )
+  return <>{renderField(fieldProps)}</>
 }

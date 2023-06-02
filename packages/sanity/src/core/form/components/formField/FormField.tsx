@@ -9,6 +9,10 @@ export interface FormFieldProps {
   /**
    * @beta
    */
+  __unstable_headerActions?: React.ReactNode
+  /**
+   * @beta
+   */
   validation?: FormNodeValidation[]
   /**
    * @beta
@@ -33,6 +37,7 @@ export const FormField = memo(function FormField(
 ) {
   const {
     validation,
+    __unstable_headerActions: headerActions,
     __unstable_presence: presence,
     children,
     description,
@@ -49,6 +54,7 @@ export const FormField = memo(function FormField(
       */}
       {title && (
         <FormFieldHeader
+          __unstable_actions={headerActions}
           validation={validation}
           __unstable_presence={presence}
           description={description}

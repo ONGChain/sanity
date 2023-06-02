@@ -86,6 +86,7 @@ describe('FormBuilder', () => {
           changed: false,
           collapsedFieldSets: undefined,
           collapsedPaths: undefined,
+          documentId: 'test',
           focused: formState?.focused,
           focusPath: formState?.focusPath || EMPTY_ARRAY,
           groups: formState?.groups || EMPTY_ARRAY,

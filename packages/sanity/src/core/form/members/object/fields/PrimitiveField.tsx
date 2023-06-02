@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react'
-import {isBooleanSchemaType, isNumberSchemaType, SchemaType} from '@sanity/types'
+import {isBooleanSchemaType, isNumberSchemaType} from '@sanity/types'
 import {FieldMember} from '../../../store'
 import {
   PrimitiveFieldProps,
@@ -10,6 +10,9 @@ import {
 import {FormPatch, PatchEvent, set, unset} from '../../../patch'
 import {useFormCallbacks} from '../../../studio/contexts/FormCallbacks'
 import {resolveNativeNumberInputValue} from '../../common/resolveNativeNumberInputValue'
+import {FieldActionMenu, FieldProvider, useFieldActions} from '../../../field'
+import {useFormBuilder} from '../../../useFormBuilder'
+import {pathToString} from '../../../../field'
 
 /**
  * Responsible for creating inputProps and fieldProps to pass to ´renderInput´ and ´renderField´ for a primitive field/input
@@ -22,26 +25,15 @@ export function PrimitiveField(props: {
   renderInput: RenderInputCallback<PrimitiveInputProps>
   renderField: RenderFieldCallback<PrimitiveFieldProps>
 }) {
-  const {member, renderInput, renderField} = props
-  const focusRef = useRef<{focus: () => void}>()
+  const {member} = props
+
+  const {__internal, focusPath} = useFormBuilder()
+  const {documentId, field} = __internal
+  const focused = pathToString(focusPath) === pathToString(member.field.path)
+
+  const {onChange} = useFormCallbacks()
 
   const [localValue, setLocalValue] = useState<string | undefined>()
-
-  const {onPathBlur, onPathFocus, onChange} = useFormCallbacks()
-
-  useEffect(() => {
-    if (member.field.focused) {
-      focusRef.current?.focus()
-    }
-  }, [member.field.focused])
-
-  const handleBlur = useCallback(() => {
-    onPathBlur(member.field.path)
-  }, [member.field.path, onPathBlur])
-
-  const handleFocus = useCallback(() => {
-    onPathFocus(member.field.path)
-  }, [member.field.path, onPathFocus])
 
   const handleChange = useCallback(
     (event: FormPatch | FormPatch[] | PatchEvent) => {
@@ -79,6 +71,53 @@ export function PrimitiveField(props: {
     [member.name, member.field.schemaType, onChange]
   )
 
+  return (
+    <FieldProvider
+      actions={field.actions}
+      documentId={documentId}
+      documentType={member.field.schemaType.name}
+      focused={focused}
+      path={member.field.path}
+      schemaType={member.field.schemaType}
+    >
+      <Field
+        {...props}
+        localValue={localValue}
+        onChange={handleChange}
+        onNativeChange={handleNativeChange}
+      />
+    </FieldProvider>
+  )
+}
+
+function Field(props: {
+  localValue: string | undefined
+  member: FieldMember
+  onChange: (event: FormPatch | FormPatch[] | PatchEvent) => void
+  onNativeChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+  renderInput: RenderInputCallback<PrimitiveInputProps>
+  renderField: RenderFieldCallback<PrimitiveFieldProps>
+}) {
+  const {localValue, member, onChange, onNativeChange, renderInput, renderField} = props
+
+  const {onPathBlur, onPathFocus} = useFormCallbacks()
+
+  const focusRef = useRef<{focus: () => void}>()
+
+  useEffect(() => {
+    if (member.field.focused) {
+      focusRef.current?.focus()
+    }
+  }, [member.field.focused])
+
+  const handleBlur = useCallback(() => {
+    onPathBlur(member.field.path)
+  }, [member.field.path, onPathBlur])
+
+  const handleFocus = useCallback(() => {
+    onPathFocus(member.field.path)
+  }, [member.field.path, onPathFocus])
+
   const validationError =
     useMemo(
       () =>
@@ -95,7 +134,7 @@ export function PrimitiveField(props: {
       onFocus: handleFocus,
       id: member.field.id,
       ref: focusRef,
-      onChange: handleNativeChange,
+      onChange: onNativeChange,
       value: resolveNativeNumberInputValue(member.field.schemaType, member.field.value, localValue),
       readOnly: Boolean(member.field.readOnly),
       placeholder: member.field.schemaType.placeholder,
@@ -103,12 +142,12 @@ export function PrimitiveField(props: {
     [
       handleBlur,
       handleFocus,
-      handleNativeChange,
+      localValue,
       member.field.id,
-      member.field.readOnly,
       member.field.schemaType,
       member.field.value,
-      localValue,
+      member.field.readOnly,
+      onNativeChange,
     ]
   )
 
@@ -122,7 +161,7 @@ export function PrimitiveField(props: {
       path: member.field.path,
       focused: member.field.focused,
       level: member.field.level,
-      onChange: handleChange,
+      onChange: onChange,
       validation: member.field.validation,
       presence: member.field.presence,
       validationError,
@@ -139,15 +178,18 @@ export function PrimitiveField(props: {
     member.field.level,
     member.field.validation,
     member.field.presence,
-    handleChange,
+    onChange,
     validationError,
     elementProps,
   ])
 
   const renderedInput = useMemo(() => renderInput(inputProps), [inputProps, renderInput])
 
+  const actions = useFieldActions()
+
   const fieldProps = useMemo((): Omit<PrimitiveFieldProps, 'renderDefault'> => {
     return {
+      actions: actions.length > 0 ? <FieldActionMenu nodes={actions} /> : undefined,
       name: member.name,
       index: member.index,
       level: member.field.level,
@@ -164,6 +206,7 @@ export function PrimitiveField(props: {
       inputProps: inputProps as any,
     }
   }, [
+    actions,
     member.name,
     member.index,
     member.field.level,

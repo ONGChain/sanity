@@ -10,6 +10,10 @@ export interface FormFieldHeaderProps {
   /**
    * @beta
    */
+  __unstable_actions?: React.ReactNode
+  /**
+   * @beta
+   */
   validation?: FormNodeValidation[]
   /**
    * @beta
@@ -24,10 +28,17 @@ export interface FormFieldHeaderProps {
 }
 
 export const FormFieldHeader = memo(function FormFieldHeader(props: FormFieldHeaderProps) {
-  const {validation, __unstable_presence: presence, description, inputId, title} = props
+  const {
+    __unstable_actions: actions,
+    __unstable_presence: presence,
+    description,
+    inputId,
+    title,
+    validation,
+  } = props
 
   return (
-    <Flex align="flex-end">
+    <Flex align="flex-end" style={{lineHeight: 1}}>
       <Box flex={1} paddingY={2}>
         <FormFieldHeaderText
           validation={validation}
@@ -38,8 +49,14 @@ export const FormFieldHeader = memo(function FormFieldHeader(props: FormFieldHea
       </Box>
 
       {presence && presence.length > 0 && (
-        <Box>
+        <Box flex="none">
           <FieldPresence maxAvatars={4} presence={presence} />
+        </Box>
+      )}
+
+      {actions && (
+        <Box flex="none" marginLeft={3}>
+          {actions}
         </Box>
       )}
     </Flex>

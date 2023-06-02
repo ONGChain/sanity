@@ -18,6 +18,9 @@ import {PatchArg, PatchEvent, setIfMissing, unset} from '../../../patch'
 import {FormCallbacksProvider, useFormCallbacks} from '../../../studio/contexts/FormCallbacks'
 import {createProtoValue} from '../../../utils/createProtoValue'
 import {applyAll} from '../../../patch/applyPatch'
+import {FieldActionMenu, FieldProvider, useFieldActions} from '../../../field'
+import {useFormBuilder} from '../../../useFormBuilder'
+import {pathToString} from '../../../../field'
 
 /**
  * Responsible for creating inputProps and fieldProps to pass to ´renderInput´ and ´renderField´ for an object input
@@ -34,6 +37,11 @@ export const ObjectField = function ObjectField(props: {
   renderItem: RenderArrayOfObjectsItemCallback
   renderPreview: RenderPreviewCallback
 }) {
+  const {member} = props
+  const {__internal, focusPath} = useFormBuilder()
+  const {documentId, field} = __internal
+  const focused = pathToString(focusPath) === pathToString(member.field.path)
+
   const {
     onPathBlur,
     onPathFocus,
@@ -44,17 +52,6 @@ export const ObjectField = function ObjectField(props: {
     onFieldGroupSelect,
   } = useFormCallbacks()
 
-  const {
-    member,
-    renderAnnotation,
-    renderBlock,
-    renderField,
-    renderInlineBlock,
-    renderInput,
-    renderItem,
-    renderPreview,
-  } = props
-  const focusRef = useRef<{focus: () => void}>()
   // Keep a local reference to the most recent value. See comment in `handleChange` below for more details
   const pendingValue = useRef(member.field.value)
 
@@ -62,27 +59,6 @@ export const ObjectField = function ObjectField(props: {
     // if the props value has changed, then we should update the pending value
     pendingValue.current = member.field.value
   }, [member.field.value])
-
-  useDidUpdate(member.field.focused, (hadFocus, hasFocus) => {
-    if (!hadFocus && hasFocus) {
-      focusRef.current?.focus()
-    }
-  })
-
-  const handleBlur = useCallback(() => {
-    onPathBlur(member.field.path)
-  }, [member.field.path, onPathBlur])
-
-  const handleFocus = useCallback(() => {
-    onPathFocus(member.field.path)
-  }, [member.field.path, onPathFocus])
-
-  const handleFocusChildPath = useCallback(
-    (path: Path) => {
-      onPathFocus(member.field.path.concat(path))
-    },
-    [member.field.path, onPathFocus]
-  )
 
   const handleChange = useCallback(
     (event: PatchEvent | PatchArg) => {
@@ -112,6 +88,87 @@ export const ObjectField = function ObjectField(props: {
       )
     },
     [onChange, member, pendingValue]
+  )
+
+  return (
+    <FormCallbacksProvider
+      onFieldGroupSelect={onFieldGroupSelect}
+      onChange={handleChange}
+      onSetFieldSetCollapsed={onSetFieldSetCollapsed}
+      onPathOpen={onPathOpen}
+      onSetPathCollapsed={onSetPathCollapsed}
+      onPathBlur={onPathBlur}
+      onPathFocus={onPathFocus}
+    >
+      <FieldProvider
+        actions={field.actions}
+        documentId={documentId}
+        documentType={member.field.schemaType.name}
+        focused={focused}
+        path={member.field.path}
+        schemaType={member.field.schemaType}
+      >
+        <Field {...props} onChange={handleChange} />
+      </FieldProvider>
+    </FormCallbacksProvider>
+  )
+}
+
+function Field(props: {
+  member: FieldMember<ObjectFormNode>
+  onChange: (event: PatchEvent | PatchArg) => void
+  renderAnnotation?: RenderAnnotationCallback
+  renderBlock?: RenderBlockCallback
+  renderField: RenderFieldCallback
+  renderInlineBlock?: RenderBlockCallback
+  renderInput: RenderInputCallback
+  renderItem: RenderArrayOfObjectsItemCallback
+  renderPreview: RenderPreviewCallback
+}) {
+  const {
+    member,
+    onChange,
+    renderAnnotation,
+    renderBlock,
+    renderField,
+    renderInlineBlock,
+    renderInput,
+    renderItem,
+    renderPreview,
+  } = props
+
+  const {
+    onPathBlur,
+    onPathFocus,
+    onPathOpen,
+    onSetPathCollapsed,
+    onSetFieldSetCollapsed,
+    onFieldGroupSelect,
+  } = useFormCallbacks()
+
+  const actions = useFieldActions()
+
+  const focusRef = useRef<{focus: () => void}>()
+
+  useDidUpdate(member.field.focused, (hadFocus, hasFocus) => {
+    if (!hadFocus && hasFocus) {
+      focusRef.current?.focus()
+    }
+  })
+
+  const handleBlur = useCallback(() => {
+    onPathBlur(member.field.path)
+  }, [member.field.path, onPathBlur])
+
+  const handleFocus = useCallback(() => {
+    onPathFocus(member.field.path)
+  }, [member.field.path, onPathFocus])
+
+  const handleFocusChildPath = useCallback(
+    (path: Path) => {
+      onPathFocus(member.field.path.concat(path))
+    },
+    [member.field.path, onPathFocus]
   )
 
   const handleCollapse = useCallback(() => {
@@ -205,7 +262,7 @@ export const ObjectField = function ObjectField(props: {
       focusPath: member.field.focusPath,
       focused: member.field.focused,
       groups: member.field.groups,
-      onChange: handleChange,
+      onChange,
       renderAnnotation,
       renderBlock,
       renderField,
@@ -237,7 +294,7 @@ export const ObjectField = function ObjectField(props: {
     handleExpandFieldSet,
     handleCollapseFieldSet,
     handleFocusChildPath,
-    handleChange,
+    onChange,
     renderAnnotation,
     renderBlock,
     renderField,
@@ -251,6 +308,8 @@ export const ObjectField = function ObjectField(props: {
 
   const fieldProps = useMemo((): Omit<ObjectFieldProps, 'renderDefault'> => {
     return {
+      actions: actions.length > 0 ? <FieldActionMenu nodes={actions} /> : undefined,
+      groups: member.field.groups,
       name: member.name,
       index: member.index,
       level: member.field.level,
@@ -279,14 +338,16 @@ export const ObjectField = function ObjectField(props: {
       inputProps: inputProps as ObjectInputProps,
     }
   }, [
+    actions,
     member.name,
     member.index,
-    member.field.changed,
+    member.field.groups,
     member.field.level,
     member.field.value,
     member.field.validation,
     member.field.presence,
     member.field.schemaType,
+    member.field.changed,
     member.field.id,
     member.field.path,
     member.collapsible,
@@ -301,17 +362,5 @@ export const ObjectField = function ObjectField(props: {
     inputProps,
   ])
 
-  return (
-    <FormCallbacksProvider
-      onFieldGroupSelect={onFieldGroupSelect}
-      onChange={handleChange}
-      onSetFieldSetCollapsed={onSetFieldSetCollapsed}
-      onPathOpen={onPathOpen}
-      onSetPathCollapsed={onSetPathCollapsed}
-      onPathBlur={onPathBlur}
-      onPathFocus={onPathFocus}
-    >
-      {useMemo(() => renderField(fieldProps), [fieldProps, renderField])}
-    </FormCallbacksProvider>
-  )
+  return <>{renderField(fieldProps)}</>
 }

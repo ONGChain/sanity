@@ -8,14 +8,19 @@ import {FieldMember} from '../../store'
 import {FormField, FormFieldSet} from '../../components'
 import {ChangeIndicator} from '../../../changeIndicators'
 import {FieldGroupTabs} from '../../inputs/ObjectInput/fieldGroups'
+import {useField} from '../../field'
 import {getTypeChain} from './helpers'
 
 function BooleanField(field: FieldProps) {
+  const {onMouseEnter, onMouseLeave} = useField()
+
   return (
     <ChangeIndicator
       path={field.path}
       hasFocus={Boolean(field.inputProps.focused)}
       isChanged={field.inputProps.changed}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
       {field.children}
     </ChangeIndicator>
@@ -50,20 +55,25 @@ function DocumentField(field: ObjectFieldProps) {
 }
 
 function PrimitiveField(field: FieldProps) {
+  const {onMouseEnter, onMouseLeave} = useField()
+
   return (
     <FormField
+      __unstable_headerActions={field.actions}
+      __unstable_presence={field.presence}
       data-testid={`field-${field.inputId}`}
+      description={field.description}
       inputId={field.inputId}
       level={field.level}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       title={field.title}
-      description={field.description}
       validation={field.validation}
-      __unstable_presence={field.presence}
     >
       <ChangeIndicator
-        path={field.path}
         hasFocus={Boolean(field.inputProps.focused)}
         isChanged={field.inputProps.changed}
+        path={field.path}
       >
         {field.children}
       </ChangeIndicator>
@@ -72,8 +82,11 @@ function PrimitiveField(field: FieldProps) {
 }
 
 function ObjectOrArrayField(field: ObjectFieldProps | ArrayFieldProps) {
+  const {onMouseEnter, onMouseLeave} = useField()
+
   return (
     <FormFieldSet
+      __unstable_headerActions={field.actions}
       data-testid={`field-${field.inputId}`}
       level={field.level}
       title={field.title}
@@ -82,6 +95,8 @@ function ObjectOrArrayField(field: ObjectFieldProps | ArrayFieldProps) {
       collapsible={field.collapsible}
       onCollapse={field.onCollapse}
       onExpand={field.onExpand}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       validation={field.validation}
       __unstable_presence={field.presence}
     >
@@ -91,6 +106,8 @@ function ObjectOrArrayField(field: ObjectFieldProps | ArrayFieldProps) {
 }
 
 function ImageOrFileField(field: ObjectFieldProps) {
+  const {onMouseEnter, onMouseLeave} = useField()
+
   // unless the hotspot tool dialog is open we want to show whoever is in there as the field presence
   const hotspotField = field.inputProps.members.find(
     (member): member is FieldMember => member.kind === 'field' && member.name === 'hotspot'
@@ -101,6 +118,7 @@ function ImageOrFileField(field: ObjectFieldProps) {
 
   return (
     <FormFieldSet
+      __unstable_headerActions={field.actions}
       level={field.level}
       title={field.title}
       description={field.description}
@@ -108,6 +126,8 @@ function ImageOrFileField(field: ObjectFieldProps) {
       collapsible={field.collapsible}
       onCollapse={field.onCollapse}
       onExpand={field.onExpand}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       validation={field.validation}
       __unstable_presence={presence}
     >
@@ -134,6 +154,7 @@ export function defaultResolveFieldComponent(
   if (typeChain.some((t) => t.name === 'image' || t.name === 'file')) {
     return ImageOrFileField as React.ComponentType<Omit<FieldProps, 'renderDefault'>>
   }
+
   if (typeChain.some((t) => isReferenceSchemaType(t))) {
     return ReferenceField as React.ComponentType<Omit<FieldProps, 'renderDefault'>>
   }

@@ -10,6 +10,8 @@ import {useFormBuilder} from '../useFormBuilder'
 import {StateTree} from '../store'
 import {EMPTY_ARRAY} from '../../util'
 import {FormNodePresence} from '../../presence'
+import {DocumentFieldAction} from '../../config'
+import {FieldActionMenu, FieldProvider, useFieldActions} from '../field'
 import {FormProvider} from './FormProvider'
 import {useFormCallbacks} from './contexts/FormCallbacks'
 
@@ -18,9 +20,11 @@ import {useFormCallbacks} from './contexts/FormCallbacks'
  */
 export interface FormBuilderProps
   extends Omit<ObjectFormNode, 'level' | 'path' | 'presence' | 'validation' | '_allMembers'> {
-  /**
-   * @internal Considered internal – do not use.
-   */
+  /** @internal */
+  __internal_documentId?: string
+  /** @internal */
+  __internal_fieldActions?: DocumentFieldAction[]
+  /** @internal Considered internal – do not use. */
   __internal_patchChannel: PatchChannel
 
   autoFocus?: boolean
@@ -49,6 +53,8 @@ export interface FormBuilderProps
  */
 export function FormBuilder(props: FormBuilderProps) {
   const {
+    __internal_documentId: documentId,
+    __internal_fieldActions: fieldActions,
     __internal_patchChannel: patchChannel,
     autoFocus,
     changesOpen,
@@ -75,6 +81,8 @@ export function FormBuilder(props: FormBuilderProps) {
 
   return (
     <FormProvider
+      __internal_documentId={documentId}
+      __internal_fieldActions={fieldActions}
       __internal_patchChannel={patchChannel}
       autoFocus={autoFocus}
       changesOpen={changesOpen}
@@ -98,7 +106,16 @@ export function FormBuilder(props: FormBuilderProps) {
       schemaType={schemaType}
       value={value}
     >
-      <RootInput />
+      <FieldProvider
+        actions={fieldActions ?? EMPTY_ARRAY}
+        documentId={documentId}
+        documentType={schemaType.name}
+        focused={false}
+        path={EMPTY_ARRAY}
+        schemaType={schemaType}
+      >
+        <RootInput />
+      </FieldProvider>
     </FormProvider>
   )
 }
@@ -131,6 +148,8 @@ function RootInput() {
     onSetFieldSetCollapsed,
     onSetPathCollapsed,
   } = useFormCallbacks()
+
+  const actions = useFieldActions()
 
   const handleCollapseField = useCallback(
     (fieldName: string) => onSetPathCollapsed([fieldName], true),
@@ -209,6 +228,7 @@ function RootInput() {
   }
 
   const rootFieldProps: Omit<ObjectFieldProps, 'renderDefault'> = {
+    actions: actions.length > 0 ? <FieldActionMenu nodes={actions} /> : undefined,
     changed,
     children: renderInput(rootInputProps),
     description: schemaType.description,
