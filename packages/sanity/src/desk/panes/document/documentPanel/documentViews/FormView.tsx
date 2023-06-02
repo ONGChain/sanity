@@ -35,6 +35,7 @@ export function FormView(props: FormViewProps) {
     editState,
     documentId,
     documentType,
+    fieldActions,
     onChange,
     validation,
     ready,
@@ -143,6 +144,8 @@ export function FormView(props: FormViewProps) {
               </Box>
             ) : (
               <FormBuilder
+                __internal_documentId={documentId}
+                __internal_fieldActions={fieldActions}
                 __internal_patchChannel={patchChannel}
                 collapsedFieldSets={collapsedFieldSets}
                 collapsedPaths={collapsedPaths}
