@@ -396,7 +396,7 @@ export const PortableTextEditable = forwardRef(function PortableTextEditable(
   }
   return (
     <div ref={ref} {...restProps}>
-      {hasInvalidValue ? null : slateEditable}
+      {slateEditable}
     </div>
   )
 })
