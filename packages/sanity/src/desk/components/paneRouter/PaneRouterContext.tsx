@@ -23,6 +23,7 @@ export const PaneRouterContext = createContext<PaneRouterContextValue>({
   handleEditReference: () => missingContext(),
   ParameterizedLink: () => missingContext(),
   replaceCurrent: () => missingContext(),
+  closeCurrentAndAfter: () => missingContext(),
   closeCurrent: () => missingContext(),
   duplicateCurrent: () => missingContext(),
   setView: () => missingContext(),

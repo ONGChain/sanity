@@ -10,10 +10,11 @@ import {
   Text,
   useElementRect,
 } from '@sanity/ui'
-import React, {memo, useCallback, useMemo, useState} from 'react'
+import React, {memo, useCallback, useEffect, useMemo, useState} from 'react'
 import styled from 'styled-components'
 import {fromString as pathFromString} from '@sanity/util/paths'
 import {Path} from '@sanity/types'
+import {tap} from 'rxjs'
 import {DocumentPaneNode} from '../../types'
 import {usePaneRouter} from '../../components'
 import {PaneFooter} from '../../components/pane'
@@ -35,6 +36,7 @@ import {
   ReferenceInputOptionsProvider,
   SourceProvider,
   isDev,
+  useDocumentStore,
   useDocumentType,
   useSource,
   useTemplatePermissions,
@@ -77,6 +79,7 @@ function DocumentPaneInner(props: DocumentPaneProviderProps) {
   const {resolveNewDocumentOptions} = useSource().document
   const paneRouter = usePaneRouter()
   const options = usePaneOptions(pane.options, paneRouter.params)
+  const documentStore = useDocumentStore()
   const {documentType, isLoaded: isDocumentLoaded} = useDocumentType(options.id, options.type)
 
   const templateItems = useMemo(() => {
@@ -115,6 +118,24 @@ function DocumentPaneInner(props: DocumentPaneProviderProps) {
         }
       : {path: [], state: 'none'}
   }, [parentRefPath, groupIndex, routerPanesStateLength])
+
+  // Close pane after successful document deletion event separately from DocumentOperationResults,
+  // since otherwise it will be unmounted before the toast is pushed
+  useEffect(() => {
+    const sub = documentStore.pair
+      .operationEvents(options.id, documentType || '')
+      .pipe(
+        tap((event) => {
+          if (event.type === 'success' && event.op === 'delete') {
+            paneRouter.closeCurrentAndAfter()
+          }
+        })
+      )
+      .subscribe()
+    return () => {
+      sub.unsubscribe()
+    }
+  }, [documentStore, documentType, options.id, paneRouter])
 
   if (options.type === '*' && !isLoaded) {
     return <LoadingPane flex={2.5} minWidth={320} paneKey={paneKey} title="Loading document…" />

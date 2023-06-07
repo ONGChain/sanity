@@ -1,5 +1,5 @@
 import {SchemaType} from '@sanity/types'
-import {InteropObservable, Observable, ObservableInput, Subscribable} from 'rxjs'
+import {Observable} from 'rxjs'
 import {
   DefaultDocumentNodeResolver,
   StructureBuilder,
