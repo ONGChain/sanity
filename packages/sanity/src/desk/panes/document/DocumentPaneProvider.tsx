@@ -314,9 +314,9 @@ export const DocumentPaneProvider = memo((props: DocumentPaneProviderProps) => {
         return
       }
 
-      // toggle if the same inspector is already open
+      // if the inspector is already open, only update params
       if (currentInspector?.name === nextInspector.name) {
-        closeInspector(nextInspector.name)
+        setPaneParams({...params, ...paneParams, inspect: nextInspector.name})
         return
       }
 
@@ -337,7 +337,7 @@ export const DocumentPaneProvider = memo((props: DocumentPaneProviderProps) => {
 
       setPaneParams({...result.params, ...paneParams, inspect: nextInspector.name})
     },
-    [closeInspector, currentInspector, inspectors, params, setPaneParams]
+    [currentInspector, inspectors, params, setPaneParams]
   )
 
   const handleHistoryClose = useCallback(() => {
@@ -389,14 +389,26 @@ export const DocumentPaneProvider = memo((props: DocumentPaneProviderProps) => {
         const nextInspector = inspectors.find((i) => i.name === nextInspectorName)
 
         if (nextInspector) {
-          openInspector(nextInspector.name)
+          if (nextInspector.name === inspectorName) {
+            closeInspector(nextInspector.name)
+          } else {
+            openInspector(nextInspector.name)
+          }
           return true
         }
       }
 
       return false
     },
-    [handleHistoryOpen, inspectors, openInspector, previewUrl, toggleLegacyInspect]
+    [
+      closeInspector,
+      handleHistoryOpen,
+      inspectorName,
+      inspectors,
+      openInspector,
+      previewUrl,
+      toggleLegacyInspect,
+    ]
   )
 
   const handleKeyUp = useCallback(
