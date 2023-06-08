@@ -2,18 +2,18 @@ import React, {memo, useCallback, useEffect, useState} from 'react'
 import {DocumentInspector, DocumentInspectorMenuItem, useUnique} from 'sanity'
 
 interface InspectorMenuItemProps {
-  inspector: DocumentInspector
   documentId: string
   documentType: string
   index: number
   setMenuItem: (node: DocumentInspectorMenuItem, index: number) => void
+  useMenuItem: NonNullable<DocumentInspector['useMenuItem']>
 }
 
 const InspectorMenuItem = memo(function InspectorMenuItem(props: InspectorMenuItemProps) {
-  const {inspector, documentId, documentType, index, setMenuItem} = props
+  const {documentId, documentType, index, setMenuItem, useMenuItem} = props
 
   const node = useUnique(
-    inspector.useMenuItem({
+    useMenuItem({
       documentId,
       documentType,
     })
@@ -61,16 +61,19 @@ export function DocumentInspectorMenuItemsResolver(props: DocumentInspectorMenuI
 
   return (
     <>
-      {inspectors.map((inspector, inspectorIndex) => (
-        <InspectorMenuItem
-          documentId={documentId}
-          documentType={documentType}
-          index={inspectorIndex}
-          inspector={inspector}
-          key={inspector.name}
-          setMenuItem={handleSetInspectorMenuItem}
-        />
-      ))}
+      {inspectors.map(
+        (inspector, inspectorIndex) =>
+          inspector.useMenuItem && (
+            <InspectorMenuItem
+              documentId={documentId}
+              documentType={documentType}
+              index={inspectorIndex}
+              key={inspector.name}
+              setMenuItem={handleSetInspectorMenuItem}
+              useMenuItem={inspector.useMenuItem}
+            />
+          )
+      )}
     </>
   )
 }

@@ -36,7 +36,7 @@ export interface DocumentInspector {
   /**
    * Hook for defining a menu item for the inspector.
    */
-  useMenuItem: (props: DocumentInspectorMenuItemContext) => DocumentInspectorMenuItem
+  useMenuItem?: (props: DocumentInspectorMenuItemContext) => DocumentInspectorMenuItem
 
   /**
    * Callback for when the inspector is closed, which can be used to clean up custom document pane
