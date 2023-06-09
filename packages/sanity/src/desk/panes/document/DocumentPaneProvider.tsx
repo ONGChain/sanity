@@ -332,6 +332,7 @@ export const DocumentPaneProvider = memo((props: DocumentPaneProviderProps) => {
     const createActionDisabled = isNonExistent && !isActionEnabled(schemaType!, 'create')
     const reconnecting = connectionState === 'reconnecting'
     const isLocked = editState.transactionSyncLock?.enabled
+    const isLocallyLocked = editState.localOperationLock?.enabled
 
     return (
       !ready ||
@@ -340,7 +341,8 @@ export const DocumentPaneProvider = memo((props: DocumentPaneProviderProps) => {
       updateActionDisabled ||
       createActionDisabled ||
       reconnecting ||
-      isLocked
+      isLocked ||
+      isLocallyLocked
     )
   }, [
     connectionState,
@@ -351,6 +353,7 @@ export const DocumentPaneProvider = memo((props: DocumentPaneProviderProps) => {
     revTime,
     schemaType,
     editState.transactionSyncLock,
+    editState.localOperationLock,
   ])
 
   const formState = useFormState(schemaType!, {

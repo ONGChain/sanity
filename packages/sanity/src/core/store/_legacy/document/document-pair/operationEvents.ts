@@ -38,6 +38,10 @@ interface ExecuteArgs {
   extraArgs: any[]
 }
 
+export interface ExecuteArgsHook extends ExecuteArgs {
+  state: 'before' | 'after'
+}
+
 function maybeObservable(v: void | Observable<any>) {
   return typeof v === 'undefined' ? of(null) : v
 }
@@ -66,6 +70,7 @@ const execute = (
 }
 
 const operationCalls$ = new Subject<ExecuteArgs>()
+const operationCallHooks$ = new Subject<ExecuteArgsHook>()
 
 /** @internal */
 export function emitOperation(
@@ -75,6 +80,17 @@ export function emitOperation(
   extraArgs: any[]
 ): void {
   operationCalls$.next({operationName, idPair, typeName, extraArgs})
+}
+
+/** @internal */
+export function emitOperationHook(
+  state: OperationHookEvent['state'],
+  operationName: keyof OperationsAPI,
+  idPair: IdPair,
+  typeName: string,
+  extraArgs: any[]
+): void {
+  operationCallHooks$.next({state, operationName, idPair, typeName, extraArgs})
 }
 
 // These are the operations that cannot be performed while the document is in an inconsistent state
@@ -87,6 +103,16 @@ export interface OperationError {
   op: keyof OperationsAPI
   id: string
   error: Error
+}
+
+export interface OperationHookEvent {
+  // type: 'success' | 'error'
+  /** @internal */
+  op: keyof OperationsAPI
+  // id: string
+  state: 'before' | 'after'
+  error?: string | null
+  args: ExecuteArgs
 }
 
 /** @beta */
@@ -109,6 +135,20 @@ interface IntermediaryError {
 }
 
 /** @internal */
+export const operationEventHooks = memoize(
+  (ctx: {client: SanityClient; schema: Schema}) => {
+    const result$: Observable<ExecuteArgsHook> = operationCallHooks$
+
+    return result$
+  },
+  (ctx) => {
+    const config = ctx.client.config()
+    // we only want one of these per dataset+projectid
+    return `${config.dataset ?? ''}-${config.projectId ?? ''}`
+  }
+)
+
+/** @internal */
 export const operationEvents = memoize(
   (ctx: {client: SanityClient; historyStore: HistoryStore; schema: Schema}) => {
     const result$: Observable<IntermediarySuccess | IntermediaryError> = operationCalls$.pipe(
@@ -121,6 +161,15 @@ export const operationEvents = memoize(
           switchMap((args) =>
             operationArgs(ctx, args.idPair, args.typeName).pipe(
               take(1),
+              tap(() => {
+                emitOperationHook(
+                  'before',
+                  args.operationName,
+                  args.idPair,
+                  args.typeName,
+                  args.extraArgs
+                )
+              }),
               switchMap((operationArguments) => {
                 const requiresConsistency = REQUIRES_CONSISTENCY.includes(args.operationName)
                 if (requiresConsistency) {
@@ -140,7 +189,16 @@ export const operationEvents = memoize(
               map((): IntermediarySuccess => ({type: 'success', args})),
               catchError(
                 (err): Observable<IntermediaryError> => of({type: 'error', args, error: err})
-              )
+              ),
+              tap((result) => {
+                emitOperationHook(
+                  'after',
+                  args.operationName,
+                  args.idPair,
+                  args.typeName,
+                  args.extraArgs
+                )
+              })
             )
           )
         )

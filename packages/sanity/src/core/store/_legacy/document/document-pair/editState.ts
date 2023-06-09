@@ -7,6 +7,7 @@ import {memoize} from '../utils/createMemoizer'
 import {isLiveEditEnabled} from './utils/isLiveEditEnabled'
 import {snapshotPair} from './snapshotPair'
 import {memoizeKeyGen} from './memoizeKeyGen'
+import {lockableOperations} from './lockableOperations'
 
 interface TransactionSyncLockState {
   enabled: boolean
@@ -17,6 +18,7 @@ export interface EditStateFor {
   id: string
   type: string
   transactionSyncLock: TransactionSyncLockState | null
+  localOperationLock: TransactionSyncLockState | null
   draft: SanityDocument | null
   published: SanityDocument | null
   liveEdit: boolean
@@ -35,6 +37,7 @@ export const editState = memoize(
     idPair: IdPair,
     typeName: string
   ): Observable<EditStateFor> => {
+    const lockableOperations$ = lockableOperations(ctx, idPair, typeName)
     const liveEdit = isLiveEditEnabled(ctx.schema, typeName)
     return snapshotPair(ctx.client, idPair, typeName).pipe(
       switchMap((versions) =>
@@ -45,9 +48,15 @@ export const editState = memoize(
             map((ev: PendingMutationsEvent) => (ev.phase === 'begin' ? LOCKED : NOT_LOCKED)),
             startWith(NOT_LOCKED)
           ),
+          lockableOperations$.pipe(
+            map((ev) =>
+              ev.state === 'before' && ev.operationName === 'delete' ? LOCKED : NOT_LOCKED
+            ),
+            startWith(NOT_LOCKED)
+          ),
         ])
       ),
-      map(([draftSnapshot, publishedSnapshot, transactionSyncLock]) => ({
+      map(([draftSnapshot, publishedSnapshot, transactionSyncLock, localOperationLock]) => ({
         id: idPair.publishedId,
         type: typeName,
         draft: draftSnapshot,
@@ -55,6 +64,7 @@ export const editState = memoize(
         liveEdit,
         ready: true,
         transactionSyncLock,
+        localOperationLock,
       })),
       startWith({
         id: idPair.publishedId,
@@ -64,6 +74,7 @@ export const editState = memoize(
         liveEdit,
         ready: false,
         transactionSyncLock: null,
+        localOperationLock: null,
       }),
       publishReplay(1),
       refCount()
