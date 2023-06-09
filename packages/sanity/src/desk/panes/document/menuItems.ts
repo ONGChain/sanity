@@ -22,18 +22,18 @@ function getInspectorItems({
     .map((inspector, index) => {
       const menuItem = inspectorMenuItems[index]
 
-      if (menuItem?.hidden) return null
+      if (!menuItem || menuItem.hidden) return null
 
       return {
         action: `${INSPECT_ACTION_PREFIX}${inspector.name}`,
-        group: 'inspectors',
-        icon: menuItem?.icon,
+        group: menuItem.showAsAction ? undefined : 'inspectors',
+        icon: menuItem.icon,
         isDisabled: !hasValue,
         selected: currentInspector?.name === inspector.name,
-        shortcut: menuItem?.hotkeys?.join('+'),
-        showAsAction: menuItem?.showAsAction,
-        title: menuItem?.title,
-        tone: menuItem?.tone,
+        shortcut: menuItem.hotkeys?.join('+'),
+        showAsAction: menuItem.showAsAction,
+        title: menuItem.title,
+        tone: menuItem.tone,
       }
     })
     .filter(Boolean) as PaneMenuItem[]
@@ -63,7 +63,7 @@ export function getProductionPreviewItem({previewUrl}: GetMenuItemsParams): Pane
 }
 
 export function getMenuItems(params: GetMenuItemsParams): PaneMenuItem[] {
-  const inspectorItems = getInspectorItems(params).slice(0)
+  const inspectorItems = getInspectorItems(params)
   const items = [
     // Get production preview item
     getProductionPreviewItem(params),

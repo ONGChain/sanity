@@ -56,7 +56,7 @@ export function DocumentInspectorMenuItemsResolver(props: DocumentInspectorMenuI
   )
 
   useEffect(() => {
-    onResolvedItems(inspectorMenuItems)
+    onResolvedItems(inspectorMenuItems.filter(Boolean) as DocumentInspectorMenuItem[])
   }, [inspectorMenuItems, onResolvedItems])
 
   return (
