@@ -6,6 +6,7 @@
 
 export * from './commandList'
 export * from './DefaultDocument'
+export * from './DisabledTooltip'
 export * from './globalErrorHandler'
 export * from './hookCollection'
 export * from './InsufficientPermissionsMessage'
