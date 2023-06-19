@@ -46,6 +46,8 @@ import {
   useTimelineSelector,
   DocumentFieldAction,
   DocumentInspectorMenuItem,
+  FieldProvider,
+  EMPTY_ARRAY,
 } from 'sanity'
 
 /**
@@ -632,7 +634,20 @@ export const DocumentPaneProvider = memo((props: DocumentPaneProviderProps) => {
         />
       )}
 
-      {children}
+      {schemaType ? (
+        <FieldProvider
+          actions={fieldActions}
+          documentId={documentId}
+          documentType={documentType}
+          focused={false}
+          path={EMPTY_ARRAY}
+          schemaType={schemaType}
+        >
+          {children}
+        </FieldProvider>
+      ) : (
+        children
+      )}
     </DocumentPaneContext.Provider>
   )
 })
