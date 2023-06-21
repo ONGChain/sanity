@@ -14,11 +14,17 @@ export interface BlockOptions {
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface BlockRule extends RuleDef<BlockRule, any[]> {}
 
+export interface BlockEditorDefinition {
+  icon: ReactNode | ComponentType
+  render: ReactNode | ComponentType
+}
+
 /** @public */
 export interface BlockDecoratorDefinition {
   title: string
   value: string
   icon?: ReactNode | ComponentType
+  blockEditor?: BlockEditorDefinition
 }
 
 /** @public */
@@ -33,7 +39,6 @@ export interface BlockListDefinition {
   value: string
   icon?: ReactNode | ComponentType
 }
-
 /** @public */
 export interface BlockAnnotationDefinition extends ObjectDefinition {
   icon?: ReactNode | ComponentType
