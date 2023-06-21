@@ -86,16 +86,21 @@ function isPromise<T>(thing: unknown): thing is PromiseLike<T> {
 }
 
 /**
- * @hidden
- * @beta */
+ * Interface for List
+ *
+ * @public
+ */
 export interface List extends GenericList {
   type: 'list'
+  /* List items */
   items: (ListItem | Divider)[]
 }
 
 /**
- * @hidden
- * @beta */
+ * Interface for list input
+ *
+ * @public
+ */
 export interface ListInput extends GenericListInput {
   items?: (ListItem | ListItemBuilder | Divider)[]
 }

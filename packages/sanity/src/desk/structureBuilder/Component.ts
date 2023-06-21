@@ -7,8 +7,10 @@ import {UserComponent} from './types'
 import {getStructureNodeId} from './util/getStructureNodeId'
 
 /**
- * @hidden
- * @beta */
+ * Interface for component
+ *
+ * @public
+ */
 // TODO: rename to `StructureComponent` since it clashes with React?
 export interface Component extends StructureNode {
   component: UserComponent
@@ -41,8 +43,10 @@ export interface BuildableComponent extends Partial<StructureNode> {
 }
 
 /**
- * @hidden
- * @beta */
+ * Class for building components
+ *
+ * @public
+ */
 export class ComponentBuilder implements Serializable<Component> {
   protected spec: BuildableComponent
 

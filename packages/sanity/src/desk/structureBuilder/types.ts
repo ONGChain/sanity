@@ -20,8 +20,9 @@ import type {ConfigContext, Source, InitialValueTemplateItem} from 'sanity'
 export type View = FormView | ComponentView
 
 /**
- * @hidden
- * @beta */
+ * Type for a user view component
+ *
+ * @public */
 export type UserViewComponent<TOptions = Record<string, any>> = React.ComponentType<{
   document: {
     draft: SanityDocument | null
@@ -35,8 +36,10 @@ export type UserViewComponent<TOptions = Record<string, any>> = React.ComponentT
 }>
 
 /**
- * @hidden
- * @beta */
+ * Type for User defined component
+ *
+ * @public
+ */
 export type UserComponent = React.ComponentType<{
   child?: ComponentBuilder
   childItemId?: string

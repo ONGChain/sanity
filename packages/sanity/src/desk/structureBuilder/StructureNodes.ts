@@ -49,14 +49,21 @@ export interface DocumentNode extends StructureNode {
 }
 
 /**
- * @hidden
- * @beta */
+ * Interface for Editor node
+ *
+ * @public */
 export interface EditorNode extends StructureNode {
+  /* Editor Id */
   child?: Child
+  /* Editor options */
   options: {
+    /* Editor ID */
     id: string
+    /* Editor type */
     type?: string
+    /* Editor template */
     template?: string
+    /* Template parameters */
     templateParameters?: {[key: string]: any}
   }
 }
@@ -75,16 +82,21 @@ export interface Divider {
 }
 
 /**
- * @hidden
- * @beta */
+ * Type for the path of a serialized structure node
+ *
+ * @public
+ */
 export type SerializePath = (string | number)[]
 
 /**
- * @hidden
- * @beta */
+ * Interface for seraializing a structure node
+ * @public */
 export interface SerializeOptions {
+  /* path */
   path: SerializePath
+  /* index */
   index?: number
+  /* hint */
   hint?: string
 }
 
@@ -98,13 +110,17 @@ export interface Serializable<T> {
 }
 
 /**
- * @hidden
- * @beta */
+ * Type for a collection
+ *
+ * @public
+ */
 export type Collection = List | DocumentList | EditorNode | DocumentNode | Component
 
 /**
- * @hidden
- * @beta */
+ * Type for a collection builder
+ *
+ * @public
+ */
 export type CollectionBuilder =
   | ListBuilder
   | DocumentListBuilder
@@ -113,8 +129,10 @@ export type CollectionBuilder =
   | ComponentBuilder
 
 /**
- * @hidden
- * @beta */
+ * Type for Child of a structure node
+ *
+ * @public
+ */
 export type Child = Collection | CollectionBuilder | ChildResolver
 
 /** @internal */
