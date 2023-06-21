@@ -21,24 +21,38 @@ export interface Component extends StructureNode {
 }
 
 /**
- * @hidden
- * @beta */
+ * Interface for component input
+ *
+ * @public
+ */
 export interface ComponentInput extends StructureNode {
+  /** Component */
   component: UserComponent
+  /** Component child */
   child?: Child
+  /** Component options */
   options?: {[key: string]: unknown}
+  /** Component menu items */
   menuItems?: (MenuItem | MenuItemBuilder)[]
+  /** Component menu item groups */
   menuItemGroups?: (MenuItemGroup | MenuItemGroupBuilder)[]
 }
 
 /**
- * @hidden
- * @beta */
+ * Interface for buildable component
+ *
+ * @public
+ */
 export interface BuildableComponent extends Partial<StructureNode> {
+  /** Component */
   component?: UserComponent
+  /** Component child */
   child?: Child
+  /** Component options */
   options?: {[key: string]: unknown}
+  /** Component menu items */
   menuItems?: (MenuItem | MenuItemBuilder)[]
+  /** Component menu item groups */
   menuItemGroups?: (MenuItemGroup | MenuItemGroupBuilder)[]
 }
 

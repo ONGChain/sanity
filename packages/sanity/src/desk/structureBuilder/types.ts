@@ -15,8 +15,10 @@ import type {FormView, FormViewBuilder} from './views/FormView'
 import type {ConfigContext, Source, InitialValueTemplateItem} from 'sanity'
 
 /**
- * @hidden
- * @beta */
+ * Type for view
+ *
+ * @public
+ */
 export type View = FormView | ComponentView
 
 /**
@@ -41,14 +43,23 @@ export type UserViewComponent<TOptions = Record<string, any>> = React.ComponentT
  * @public
  */
 export type UserComponent = React.ComponentType<{
+  /** Component child */
   child?: ComponentBuilder
+  /** Component child item ID */
   childItemId?: string
+  /** Component ID */
   id: string
+  /** Is component active */
   isActive?: boolean
+  /** Is component selected */
   isSelected?: boolean
+  /** item ID */
   itemId: string
+  /** Component options */
   options?: Record<string, unknown>
+  /** Pane key */
   paneKey: string
+  /** URL parameters */
   urlParams: Record<string, string | undefined> | undefined
 }>
 

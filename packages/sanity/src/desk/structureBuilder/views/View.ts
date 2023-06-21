@@ -95,6 +95,8 @@ export function maybeSerializeView(
 }
 
 /**
- * @hidden
- * @beta */
+ * Type for view builder
+ *
+ * @public
+ */
 export type ViewBuilder = ComponentViewBuilder | FormViewBuilder

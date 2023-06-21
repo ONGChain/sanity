@@ -3,16 +3,24 @@ import {StructureContext} from './types'
 import {Observable} from 'rxjs'
 
 /**
- * @hidden
- * @beta */
+ * Interface for child resolver options
+ *
+ * @public
+ */
 // TODO: unify with the RouterSplitPaneContext
 export interface ChildResolverOptions {
+  /** Child parent */
   parent: unknown
+  /** Child index */
   index: number
   splitIndex: number
+  /** Child path */
   path: string[]
+  /** Child parameters */
   params: Record<string, string | undefined>
+  /** Structure context */
   structureContext: StructureContext
+  /** Serialize options */
   serializeOptions?: SerializeOptions
 }
 

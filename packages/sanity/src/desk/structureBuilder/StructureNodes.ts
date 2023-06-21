@@ -12,11 +12,16 @@ import type {DocumentBuilder} from './Document'
 import type {View} from './types'
 
 /**
- * @hidden
- * @beta */
+ * Interface for the structure builder node.
+ *
+ * @public
+ */
 export interface StructureNode {
+  /** Node ID */
   id: string
+  /** Node ID */
   title?: string
+  /** Node type */
   type?: string
 }
 

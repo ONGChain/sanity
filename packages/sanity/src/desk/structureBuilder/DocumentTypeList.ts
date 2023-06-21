@@ -6,8 +6,10 @@ import {GenericListInput} from './GenericList'
 import {StructureContext} from './types'
 
 /**
- * @hidden
- * @beta */
+ * Interface for document type list input
+ *
+ * @public
+ */
 export interface DocumentTypeListInput extends Partial<GenericListInput> {
   schemaType: SchemaType | string
 }

@@ -10,7 +10,8 @@ import {InitialValueTemplateItem} from 'sanity'
 /**
  * A `InitialValueTemplateItemBuilder` is used to build a document node with an initial value set.
  *
- * @public */
+ * @public
+ */
 export class InitialValueTemplateItemBuilder implements Serializable<InitialValueTemplateItem> {
   protected spec: Partial<InitialValueTemplateItem>
 

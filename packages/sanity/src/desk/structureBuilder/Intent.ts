@@ -43,14 +43,20 @@ export interface Intent {
 }
 
 /**
- * @hidden
- * @beta */
+ * Interface for intent checker
+ *
+ * @public
+ */
 export interface IntentChecker {
   (
+    /** Intent name */
     intentName: string,
+    /** Intent checker parameter */
     params: {[key: string]: any},
+    /** Structure context */
     context: {pane: StructureNode; index: number}
   ): boolean
+  /** intent checker identify */
   identity?: symbol
 }
 
