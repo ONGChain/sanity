@@ -108,8 +108,9 @@ export interface BuildableList extends BuildableGenericList {
 }
 
 /**
- * @hidden
- * @beta */
+ * A `ListBuilder` is used to build a list of items in the desk tool.
+ *
+ * @public */
 export class ListBuilder extends GenericListBuilder<BuildableList, ListBuilder> {
   protected spec: BuildableList
 

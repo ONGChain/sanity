@@ -21,16 +21,30 @@ export interface StructureNode {
 }
 
 /**
- * @hidden
- * @beta */
+ * Interface for the document list builder (focused on the document pane)
+ *
+ * @public */
 export interface DocumentNode extends StructureNode {
+  /**
+   * Document children
+   */
   child?: Child
+  /**
+   * Options for the document pane
+   */
   options: {
+    /** Document Id */
     id: string
+    /** Document Type */
     type?: string
+    /** Document Template */
     template?: string
+    /** Template parameters */
     templateParameters?: {[key: string]: any}
   }
+  /**
+   * Views for the document pane
+   */
   views: View[]
 }
 
@@ -48,9 +62,14 @@ export interface EditorNode extends StructureNode {
 }
 
 /**
- * @hidden
- * @beta */
+ * A `Divider` is a visual separator in the structure tree.
+ *
+ * @public
+ */
 export interface Divider {
+  /**
+   * The divider's ID
+   */
   id: string
   type: 'divider'
 }
@@ -70,8 +89,10 @@ export interface SerializeOptions {
 }
 
 /**
- * @hidden
- * @beta */
+ *  A interface for serializing a structure node to a plain JavaScript object.
+ *
+ * @public
+ */
 export interface Serializable<T> {
   serialize(options: SerializeOptions): T
 }
